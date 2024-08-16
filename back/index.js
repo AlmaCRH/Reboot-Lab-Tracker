@@ -90,7 +90,7 @@ async function writeIntersection(auth) {
 
       if (columnIndex && rowIndex) {
         const res = sheets.spreadsheets.values.update({
-          spreadsheetId: "1yb3O4D1v0uSNRID4Fg5yY9tCurBxAQ9uD1sJP5gDBhs",
+          spreadsheetId: process.env.SPREADSHEET_ID,
           range: `Lab Tracker!${columnIndex}${rowIndex}`,
           valueInputOption: "USER_ENTERED",
           requestBody: {
@@ -107,7 +107,7 @@ async function writeIntersection(auth) {
 
 const getIndexBlock = async (sheets, block) => {
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: "1yb3O4D1v0uSNRID4Fg5yY9tCurBxAQ9uD1sJP5gDBhs",
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: "Lab Tracker!A:A",
   });
 
@@ -127,7 +127,7 @@ const getIndexBlock = async (sheets, block) => {
 
 const getRowIndexFromGithubUser = async (sheets, block, githubName) => {
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: "1yb3O4D1v0uSNRID4Fg5yY9tCurBxAQ9uD1sJP5gDBhs",
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: "Lab Tracker!B:B",
   });
   const rows = res.data.values;
@@ -147,7 +147,7 @@ const getRowIndexFromGithubUser = async (sheets, block, githubName) => {
 
 const getColumnIndexFromLabName = async (sheets, block, labName) => {
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: "1yb3O4D1v0uSNRID4Fg5yY9tCurBxAQ9uD1sJP5gDBhs",
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: "Lab Tracker!D:R",
   });
   const columns = res.data.values;

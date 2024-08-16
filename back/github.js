@@ -10,20 +10,17 @@ const loadApp = async () => {
   }
 };
 
-const appID = 924173;
+const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
-const installationID = 53745042;
+const installationID = process.env.INSTALLATION_ID;
 
-/* const app = octokitApp().then((app) => {
-  new app({ appId: appID, privateKey: privateKey });
-}); */
 
 // Pull request filter
 const listAllPulls = async () => {
   try {
     const octokit = await loadApp();
     const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
-      owner: "rebootacademy-labs",
+      owner: process.env.OWNER,
       repo: "LAB-110-html-tables-forms",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
