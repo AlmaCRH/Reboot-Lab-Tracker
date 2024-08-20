@@ -68,20 +68,14 @@ async function authorize() {
 /**
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
-const writeIntersection = async (auth) => {
+const writeIntersection = async (auth, e) => {
   try {
     const sheets = google.sheets({ version: "v4", auth });
-    /*const githubData = await filterPulls();
-    const indexBlock = await getIndexBlock(sheets, "BLOCK 1");
-    const columnIndex = await getColumnIndexFromLabName(
-      sheets,
-      indexBlock,
-      "JS Animations"
-    ); */
     const [githubData, columnIndex] = await Promise.all([
       await filterPulls(),
       await getColumnIndexFromLabName(sheets, "BLOCK 1", "JS Animations"),
     ]);
+    console.log(e)
     if (githubData && githubData.length > 0) {
       const promiseList = githubData.map(async (pull) => {
         try {
@@ -189,4 +183,4 @@ const convertIndexToLetter = (index) => {
   return letter;
 };
 
-authorize().then(writeIntersection).catch(console.error);
+authorize().then((auth) => writeIntersection(auth, "a")).catch(console.error);

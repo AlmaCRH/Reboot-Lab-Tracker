@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { getItem, setItem, obj } = require("./utils");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
@@ -11,7 +12,7 @@ const loadApp = async () => {
     const app = new App({ appId: appID, privateKey: privateKey });
     return app.getInstallationOctokit(installationID);
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 
@@ -22,36 +23,50 @@ const listAllPulls = async () => {
     const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
       owner: organization,
       repo: "LAB-110-html-tables-forms",
+      accept: "application/vnd.github+json",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
       },
       sort: "created",
       state: "open",
       direction: "desc",
+      per_page: 30,
     });
-    return data;
-  } catch (error) {
-    console.log(error);
-  }
-};
+    const pulls = data.map((pullData) => ({
+      created_at: pullData.created_at,
+      user: pullData.user.login,
+    }));
 
-const filterPulls = async () => {
-  try {
-    const [allPulls, usersList] = await Promise.all([
-      await listAllPulls(),
-      await arrayMembers()
-    ])
-    const pulls = allPulls
-      .filter((el) => usersList.includes(el.user.login))
-      .map((el) => ({ created_at: el.created_at, user: el.user.login }));
     return pulls;
   } catch (error) {
-    console.log(error);
+    console.error(error);
+  }
+};
+const filterPullsByUsers = async () => {
+  try {
+    let members = await getItem(`members${obj.team}`);
+    let pullsMembers = await getItem("pulls");
+
+    if (!members?.includes(obj.team)) {
+      const [allPulls, usersList] = await Promise.all([
+        listAllPulls(),
+        getAllTeamMembers(),
+      ]);
+      await setItem("members", usersList);
+      await setItem("pulls", allPulls);
+      members = usersList;
+      pullsMembers = allPulls;
+    } else {
+      console.log("a");
+      const pulls = pullsMembers?.filter((el) => members.includes(el.user));
+      console.log(pulls);
+    }
+  } catch (error) {
+    console.error(error);
   }
 };
 
 // Teams filter
-
 const getAllTeamMembers = async () => {
   try {
     const octokit = await loadApp();
@@ -59,27 +74,18 @@ const getAllTeamMembers = async () => {
       "GET /orgs/{org}/teams/{team_slug}/members",
       {
         org: organization,
-        team_slug: "SCE-6",
-        per_page: 50,
+        team_slug: obj.team,
+        per_page: 35,
+        role: "member",
         headers: {
           "X-GitHub-Api-Version": "2022-11-28",
         },
       }
     );
-    return data;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const arrayMembers = async () => {
-  try {
-    const teamMembers = await getAllTeamMembers();
-    const members = teamMembers.map((user) => user.login);
+    const members = data.map((member) => member.login);
     return members;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
-
-module.exports = filterPulls;
+module.exports = filterPullsByUsers;
