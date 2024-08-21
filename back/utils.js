@@ -1,25 +1,29 @@
 const fs = require("fs").promises;
 const path = "./storage.json";
-const obj = {};
+const githubData = {};
 
 const readline = require("node:readline");
 const { stdin: input, stdout: output } = require("node:process");
 
 const rl = readline.createInterface({ input, output });
-rl.question("What do you want? ", (answer) => {
-  rl.question("what team ", async (team) => {
-    obj[answer] = team;
+
+rl.question("which team? ", (team) => {
+  const { filterPullsByUsers } = require("./github.js");
+  githubData["team"] = team;
+  rl.question("which lab? ", async (lab) => {
+    githubData["lab"] = lab;
     rl.close();
-    const { filterPullsByUsers } = require("./github.js");
-    filterPullsByUsers();
+    await filterPullsByUsers();
   });
 });
 
-const getItem = async (key) => {
+const getItem = async () => {
   try {
     const data = await fs.readFile(path, "utf8");
-    const storage = JSON.parse(data);
-    return storage || null;
+    if (data) {
+      const storage = JSON.parse(data);
+      return storage || null;
+    }
   } catch (error) {
     console.error(error);
   }
@@ -29,7 +33,9 @@ const setItem = async (key, value) => {
   let storage = {};
   try {
     const data = await fs.readFile(path, "utf8");
-    storage = JSON.parse(data);
+    if(data){
+      storage = JSON.parse(data);
+    }
   } catch (error) {
     console.error(error);
   }
@@ -38,4 +44,4 @@ const setItem = async (key, value) => {
   await fs.writeFile(path, JSON.stringify(storage));
 };
 
-module.exports = { getItem, setItem, obj };
+module.exports = { getItem, setItem, githubData };

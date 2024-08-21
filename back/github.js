@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { getItem, setItem, obj } = require("./utils");
+const { getItem, setItem, githubData } = require("./utils");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
@@ -22,7 +22,7 @@ const listAllPulls = async () => {
     const octokit = await loadApp();
     const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
       owner: organization,
-      repo: "LAB-110-html-tables-forms",
+      repo: githubData.lab,
       accept: "application/vnd.github+json",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
@@ -30,7 +30,7 @@ const listAllPulls = async () => {
       sort: "created",
       state: "open",
       direction: "desc",
-      per_page: 30,
+      per_page: 50,
     });
     const pulls = data.map((pullData) => ({
       created_at: pullData.created_at,
@@ -42,29 +42,27 @@ const listAllPulls = async () => {
     console.error(error);
   }
 };
+
 const filterPullsByUsers = async () => {
   try {
-    let members = await getItem(`members${obj.team}`);
-    let pullsMembers = await getItem("pulls");
-    const a = members ? Object.keys(members) : null;
+    let members = await getItem();
+    let pullsList = await getItem("pulls");
 
-    if (a === null || !a.includes(`members${obj.team}`)) {
-      console.log("AAAAAAAAAAAAAAA");
-
-      const [allPulls, usersList] = await Promise.all([
-        listAllPulls(),
-        getAllTeamMembers(),
-      ]);
-      await setItem(`members${obj.team}`, usersList);
-      await setItem("pulls", allPulls);
-      members = usersList;
-      pullsMembers = allPulls;
-    } else {
-      console.log("BBBBBBBBBBBBBBBBBBBB");
-      /*  const pulls = pullsMembers?.[`members${obj.team}`].filter((el) =>
-        members.includes(el.user)
-      ); */
+    if (!members || !members[`members${githubData.team}`]) {
+      const usersList = await getAllTeamMembers();
+      await setItem(`members${githubData.team}`, usersList);
+      members = { [`members${githubData.team}`]: usersList };
     }
+    if (!pullsList || !pullsList[`pulls-${githubData.lab}`]) {
+      const allPulls = await listAllPulls();
+      await setItem(`pulls-${githubData.lab}`, allPulls);
+      pullsList = { [`pulls-${githubData.lab}`]: allPulls };
+    }
+    const filteredPullsByMembers = pullsList[`pulls-${githubData.lab}`].filter(
+      (el) => members[`members${githubData?.team}`].includes(el.user)
+    );
+
+    return filteredPullsByMembers;
   } catch (error) {
     console.error(error);
   }
@@ -78,7 +76,7 @@ const getAllTeamMembers = async () => {
       "GET /orgs/{org}/teams/{team_slug}/members",
       {
         org: organization,
-        team_slug: obj.team,
+        team_slug: githubData.team,
         role: "member",
         headers: {
           "X-GitHub-Api-Version": "2022-11-28",
