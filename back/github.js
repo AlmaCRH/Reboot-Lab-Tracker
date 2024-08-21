@@ -46,20 +46,24 @@ const filterPullsByUsers = async () => {
   try {
     let members = await getItem(`members${obj.team}`);
     let pullsMembers = await getItem("pulls");
+    const a = members ? Object.keys(members) : null;
 
-    if (!members?.includes(obj.team)) {
+    if (a === null || !a.includes(`members${obj.team}`)) {
+      console.log("AAAAAAAAAAAAAAA");
+
       const [allPulls, usersList] = await Promise.all([
         listAllPulls(),
         getAllTeamMembers(),
       ]);
-      await setItem("members", usersList);
+      await setItem(`members${obj.team}`, usersList);
       await setItem("pulls", allPulls);
       members = usersList;
       pullsMembers = allPulls;
     } else {
-      console.log("a");
-      const pulls = pullsMembers?.filter((el) => members.includes(el.user));
-      console.log(pulls);
+      console.log("BBBBBBBBBBBBBBBBBBBB");
+      /*  const pulls = pullsMembers?.[`members${obj.team}`].filter((el) =>
+        members.includes(el.user)
+      ); */
     }
   } catch (error) {
     console.error(error);
@@ -75,7 +79,6 @@ const getAllTeamMembers = async () => {
       {
         org: organization,
         team_slug: obj.team,
-        per_page: 35,
         role: "member",
         headers: {
           "X-GitHub-Api-Version": "2022-11-28",
@@ -88,4 +91,4 @@ const getAllTeamMembers = async () => {
     console.error(error);
   }
 };
-module.exports = filterPullsByUsers;
+module.exports = { filterPullsByUsers, loadApp };
