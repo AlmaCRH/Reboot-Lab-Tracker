@@ -3,7 +3,9 @@ const path = require("path");
 const process = require("process");
 const { authenticate } = require("@google-cloud/local-auth");
 const { google } = require("googleapis");
-const filterPulls = require("./github");
+const { filterPullsByUsers } = require("./github");
+const { githubData } = require("./utils");
+
 // If modifying these scopes, delete token.json.
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -68,29 +70,31 @@ async function authorize() {
 /**
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
-const writeIntersection = async (auth, e) => {
+const writeIntersection = async (auth) => {
   try {
     const sheets = google.sheets({ version: "v4", auth });
-    const [githubData, columnIndex] = await Promise.all([
-      await filterPulls(),
-      await getColumnIndexFromLabName(sheets, "BLOCK 1", "JS Animations"),
+
+    const [pullsData, columnIndex] = await Promise.all([
+      await filterPullsByUsers(),
+      await getColumnIndexFromLabName(sheets, "BLOCK 1", githubData.lab),
     ]);
-    console.log(e)
-    if (githubData && githubData.length > 0) {
-      const promiseList = githubData.map(async (pull) => {
+    console.log({ columnIndex: columnIndex });
+    if (pullsData && pullsData.length > 0) {
+      const promiseList = pullsData.map(async (pull) => {
         try {
           const rowIndex = await getRowIndexFromGithubUser(
             sheets,
             "BLOCK 1",
             pull.user
           );
+          console.log(rowIndex);
           if (columnIndex && rowIndex) {
             return sheets.spreadsheets.values.update({
               spreadsheetId: process.env.SPREADSHEET_ID,
               range: `Lab Tracker!${columnIndex}${rowIndex}`,
               valueInputOption: "USER_ENTERED",
               requestBody: {
-                values: [["Fix"]],
+                values: [[""]],
               },
             });
           }
@@ -153,18 +157,22 @@ const getRowIndexFromGithubUser = async (sheets, block, githubName) => {
 
 const getColumnIndexFromLabName = async (sheets, block, labName) => {
   try {
+    const targetPart = labName.split("-").slice(2).join("-");
+    const regexPattern = targetPart.replace(/-/g, "[\\s-&]+");
+    const regex = new RegExp(`^${regexPattern}$`, "i");
+
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "Lab Tracker!D:R",
+      range: "Lab Tracker!D3:R3",
     });
     const columns = res.data.values;
     if (!columns || columns.length === 0) {
       console.log("No data found.");
       return;
     }
-    for (let i = 2; i < columns.length; i++) {
+    for (let i = 0; i < columns.length; i++) {
       for (let j = 0; j < columns[i].length; j++) {
-        if (columns[i][j] === labName && columns[i][j] !== undefined) {
+        if (regex.test(columns[i][j])) {
           return convertIndexToLetter(j + 3);
         }
       }
@@ -183,4 +191,10 @@ const convertIndexToLetter = (index) => {
   return letter;
 };
 
-authorize().then((auth) => writeIntersection(auth, "a")).catch(console.error);
+const loadScript = () => {
+  authorize()
+    .then((auth) => writeIntersection(auth))
+    .catch(console.error);
+};
+
+module.exports = { loadScript };

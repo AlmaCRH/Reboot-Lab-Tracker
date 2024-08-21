@@ -1,4 +1,3 @@
-require("dotenv").config();
 const { getItem, setItem, githubData } = require("./utils");
 
 const appID = process.env.APP_ID;
@@ -89,4 +88,4 @@ const getAllTeamMembers = async () => {
     console.error(error);
   }
 };
-module.exports = { filterPullsByUsers, loadApp };
+module.exports = { filterPullsByUsers };
