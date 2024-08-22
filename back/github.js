@@ -15,7 +15,7 @@ const loadApp = async () => {
   }
 };
 
-// Pull request filter
+
 const listAllPulls = async () => {
   try {
     const octokit = await loadApp();
@@ -67,7 +67,7 @@ const filterPullsByUsers = async () => {
   }
 };
 
-// Teams filter
+
 const getAllTeamMembers = async () => {
   try {
     const octokit = await loadApp();

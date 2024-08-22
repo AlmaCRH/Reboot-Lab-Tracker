@@ -6,7 +6,7 @@ const { google } = require("googleapis");
 const { filterPullsByUsers } = require("./github");
 const { githubData } = require("./utils");
 
-// If modifying these scopes, delete token.json.
+
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
@@ -73,108 +73,99 @@ async function authorize() {
 const writeIntersection = async (auth) => {
   try {
     const sheets = google.sheets({ version: "v4", auth });
+    const { rows, columns } = await getIndexWithBatchGet(sheets);
+    const pulls = await filterPullsByUsers();
+    const rowsIndex = await getRowIndex(rows, pulls);
+    const columnsIndex = await getColumnIndex(sheets, columns, githubData.lab);
 
-    const [pullsData, columnIndex] = await Promise.all([
-      await filterPullsByUsers(),
-      await getColumnIndexFromLabName(sheets, "BLOCK 1", githubData.lab),
-    ]);
-    console.log({ columnIndex: columnIndex });
-    if (pullsData && pullsData.length > 0) {
-      const promiseList = pullsData.map(async (pull) => {
-        try {
-          const rowIndex = await getRowIndexFromGithubUser(
-            sheets,
-            "BLOCK 1",
-            pull.user
-          );
-          console.log(rowIndex);
-          if (columnIndex && rowIndex) {
-            return sheets.spreadsheets.values.update({
-              spreadsheetId: process.env.SPREADSHEET_ID,
-              range: `Lab Tracker!${columnIndex}${rowIndex}`,
-              valueInputOption: "USER_ENTERED",
-              requestBody: {
-                values: [[""]],
-              },
-            });
-          }
-        } catch (error) {
-          console.log(error);
-        }
+    const data = [];
+    rowsIndex.map((index) => {
+      data.push({
+        range: `Lab Tracker!${columnsIndex}${index}`,
+        values: [[""]],
       });
-      await Promise.all(promiseList);
-    }
+    });
+
+    const body = {
+      data: data,
+      valueInputOption: "USER_ENTERED",
+    };
+
+    return sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      resource: body,
+    });
   } catch (error) {
     console.log(error);
   }
 };
 
-const getIndexBlock = async (sheets, block) => {
+const getRowIndex = async (rows, pulls) => {
   try {
-    const res = await sheets.spreadsheets.values.get({
+    const index = [];
+    for (const pull of pulls) {
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].includes(pull.user)) {
+          index.push(i + 4);
+        }
+      }
+    }
+    return index;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const getIndexWithBatchGet = async (sheets) => {
+  try {
+    const blocksRes = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
       range: "Lab Tracker!A:A",
     });
 
-    const columns = res.data.values;
-    if (!columns || columns.length === 0) {
-      console.log("No data found.");
+    const blocks = blocksRes.data.values.flat();
+
+    const startRow = blocks.findIndex(
+      (value) => value.trim().toUpperCase() === "BLOCK 1"
+    );
+    const endRow = blocks.findIndex(
+      (value) => value.trim().toUpperCase() === "BLOCK 2"
+    );
+
+    if (startRow === -1 || endRow === -1 || startRow >= endRow) {
+      console.error("Blocks not found");
       return;
     }
-    if (columns.length !== 0) {
-      for (let i = 0; i < columns.length; i++) {
-        if (columns[i][0] === block.toUpperCase()) {
-          return i + 1;
-        }
-      }
-    }
-  } catch (error) {
-    console.log(error);
-  }
-};
 
-const getRowIndexFromGithubUser = async (sheets, block, githubName) => {
-  try {
-    const res = await sheets.spreadsheets.values.get({
+    const ranges = [
+      `Lab Tracker!B${startRow === 0 ? +4 : +0}:B${endRow + 1}`,
+      `Lab Tracker!D${startRow === 0 ? +3 : +0}:R${startRow === 0 ? +3 : +0}`,
+    ];
+
+    const res = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "Lab Tracker!B:B",
+      ranges: ranges,
     });
-    const rows = res.data.values;
 
-    if (!rows || rows.length === 0) {
-      console.log("No data found.");
-      return;
-    }
-    for (let i = 2; i < rows.length; i++) {
-      if (rows[i][0] === githubName) {
-        return i + 1;
-      }
-    }
+    const result = res.data.valueRanges;
+
+    const rows = result[0].values.flat();
+    const columns = result[1].values.flat();
+    return { rows: rows, columns: columns };
   } catch (error) {
-    console.log(error);
+    console.error(error.message);
   }
 };
 
-const getColumnIndexFromLabName = async (sheets, block, labName) => {
+const getColumnIndex = async (columns, labName) => {
   try {
     const targetPart = labName.split("-").slice(2).join("-");
     const regexPattern = targetPart.replace(/-/g, "[\\s-&]+");
     const regex = new RegExp(`^${regexPattern}$`, "i");
 
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SPREADSHEET_ID,
-      range: "Lab Tracker!D3:R3",
-    });
-    const columns = res.data.values;
-    if (!columns || columns.length === 0) {
-      console.log("No data found.");
-      return;
-    }
     for (let i = 0; i < columns.length; i++) {
-      for (let j = 0; j < columns[i].length; j++) {
-        if (regex.test(columns[i][j])) {
-          return convertIndexToLetter(j + 3);
-        }
+      if (regex.test(columns[i])) {
+        return convertIndexToLetter(i + 3);
       }
     }
   } catch (error) {
