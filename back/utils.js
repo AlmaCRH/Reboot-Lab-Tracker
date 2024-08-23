@@ -9,10 +9,13 @@ const githubData = {};
 rl.question("which team? ", (team) => {
   const { loadScript } = require("./index.js");
   githubData["team"] = team;
-  rl.question("which lab? ", async (lab) => {
-    githubData["lab"] = lab;
-    rl.close();
-    loadScript();
+  rl.question("which block do you want to see?", (block) => {
+    githubData["block"] = block.toUpperCase();
+    rl.question("which lab? ", async (lab) => {
+      githubData["lab"] = lab;
+      rl.close();
+      loadScript();
+    });
   });
 });
 

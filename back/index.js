@@ -6,7 +6,6 @@ const { google } = require("googleapis");
 const { filterPullsByUsers } = require("./github");
 const { githubData } = require("./utils");
 
-
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
@@ -73,16 +72,19 @@ async function authorize() {
 const writeIntersection = async (auth) => {
   try {
     const sheets = google.sheets({ version: "v4", auth });
-    const { rows, columns } = await getIndexWithBatchGet(sheets);
+    const { rows, columns, startRow, endRow } = await getIndexWithBatchGet(
+      sheets
+    );
+
     const pulls = await filterPullsByUsers();
-    const rowsIndex = await getRowIndex(rows, pulls);
-    const columnsIndex = await getColumnIndex(sheets, columns, githubData.lab);
+    const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
+    const columnsIndex = await getColumnIndex(columns, githubData.lab);
 
     const data = [];
     rowsIndex.map((index) => {
       data.push({
         range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [[""]],
+        values: [["Fix"]],
       });
     });
 
@@ -100,16 +102,23 @@ const writeIntersection = async (auth) => {
   }
 };
 
-const getRowIndex = async (rows, pulls) => {
+const getRowIndex = async (pulls, rows, startRow, endRow) => {
   try {
     const index = [];
+
+    const offset = startRow;
+
+    const adjustedStart = startRow - offset;
+    const adjustedEnd = endRow - offset;
+
     for (const pull of pulls) {
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].includes(pull.user)) {
-          index.push(i + 4);
+      for (let i = adjustedStart; i < adjustedEnd; i++) {
+        if (rows[i] && rows[i].includes(pull.user)) {
+          index.push(i + offset + 4);
         }
       }
     }
+
     return index;
   } catch (error) {
     console.log(error);
@@ -124,12 +133,20 @@ const getIndexWithBatchGet = async (sheets) => {
     });
 
     const blocks = blocksRes.data.values.flat();
+    let endBlock;
+    if (githubData.block === "BLOCK 1") {
+      endBlock = "BLOCK 2";
+    } else if (githubData.block === "BLOCK 2") {
+      endBlock = "BLOCK 3";
+    } else {
+      endBlock = "TOTAL";
+    }
 
     const startRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === "BLOCK 1"
+      (value) => value.trim().toUpperCase() === githubData.block
     );
     const endRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === "BLOCK 2"
+      (value) => value.trim().toUpperCase() === endBlock
     );
 
     if (startRow === -1 || endRow === -1 || startRow >= endRow) {
@@ -138,8 +155,8 @@ const getIndexWithBatchGet = async (sheets) => {
     }
 
     const ranges = [
-      `Lab Tracker!B${startRow === 0 ? +4 : +0}:B${endRow + 1}`,
-      `Lab Tracker!D${startRow === 0 ? +3 : +0}:R${startRow === 0 ? +3 : +0}`,
+      `Lab Tracker!B${startRow + 4}:B${endRow + 1}`,
+      `Lab Tracker!D${startRow + 3}:R${startRow + 3}`,
     ];
 
     const res = await sheets.spreadsheets.values.batchGet({
@@ -148,10 +165,10 @@ const getIndexWithBatchGet = async (sheets) => {
     });
 
     const result = res.data.valueRanges;
-
-    const rows = result[0].values.flat();
+    const rows = result[0].values.flat().filter((value) => value !== undefined);
     const columns = result[1].values.flat();
-    return { rows: rows, columns: columns };
+
+    return { rows: rows, columns: columns, startRow: startRow, endRow: endRow };
   } catch (error) {
     console.error(error.message);
   }
@@ -160,8 +177,8 @@ const getIndexWithBatchGet = async (sheets) => {
 const getColumnIndex = async (columns, labName) => {
   try {
     const targetPart = labName.split("-").slice(2).join("-");
-    const regexPattern = targetPart.replace(/-/g, "[\\s-&]+");
-    const regex = new RegExp(`^${regexPattern}$`, "i");
+    const regexPattern = targetPart.replace(/-/g, "[\\s&-]*");
+    const regex = new RegExp(`${regexPattern}`, "i");
 
     for (let i = 0; i < columns.length; i++) {
       if (regex.test(columns[i])) {
