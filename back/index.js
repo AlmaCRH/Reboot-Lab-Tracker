@@ -3,7 +3,7 @@ const path = require("path");
 const process = require("process");
 const { authenticate } = require("@google-cloud/local-auth");
 const { google } = require("googleapis");
-const { filterPullsByUsers } = require("./github");
+const { getUsersPulls } = require("./github");
 const { githubData } = require("./utils");
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
@@ -76,7 +76,7 @@ const writeIntersection = async (auth) => {
       sheets
     );
 
-    const pulls = await filterPullsByUsers();
+    const pulls = await getUsersPulls();
     const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
     const columnsIndex = await getColumnIndex(columns, githubData.lab);
 
@@ -84,7 +84,7 @@ const writeIntersection = async (auth) => {
     rowsIndex.map((index) => {
       data.push({
         range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [["Fix"]],
+        values: [[""]],
       });
     });
 

@@ -19,7 +19,7 @@ rl.question("which team? ", (team) => {
   });
 });
 
-const getItem = async () => {
+const getItemFromStorageJSON = async () => {
   try {
     const data = await fs.readFile(path, "utf8");
     if (data) {
@@ -31,7 +31,7 @@ const getItem = async () => {
   }
 };
 
-const setItem = async (key, value) => {
+const setItemInStorageJSON = async (key, value) => {
   let storage = {};
   try {
     const data = await fs.readFile(path, "utf8");
@@ -46,4 +46,4 @@ const setItem = async (key, value) => {
   await fs.writeFile(path, JSON.stringify(storage));
 };
 
-module.exports = { getItem, setItem, githubData };
+module.exports = { getItemFromStorageJSON, setItemInStorageJSON, githubData };
