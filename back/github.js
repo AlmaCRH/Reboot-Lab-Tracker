@@ -8,13 +8,17 @@ const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
 const installationID = process.env.INSTALLATION_ID;
 const organization = process.env.ORG;
+const webhookSecret = process.env.WEBHOOK_SECRET;
 
 const loadApp = async () => {
   try {
-    const { App } = await import("octokit");
+    const { App } = await import("@octokit/app");
     const app = new App({
       appId: appID,
       privateKey: privateKey,
+      webhooks: {
+        secret: webhookSecret,
+      },
     });
     return app.getInstallationOctokit(installationID);
   } catch (error) {
@@ -76,22 +80,22 @@ const getUsersPulls = async () => {
 const getTeamMembers = async () => {
   try {
     const octokit = await loadApp();
-    const { data } = await octokit.request(
-      "GET /orgs/{org}/teams/{team_slug}/members",
-      {
-        org: organization,
-        team_slug: githubData.team,
-        role: "member",
-        headers: {
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
+    const { data } = await octokit.request("GET /orgs/{org}/teams/", {
+      org: organization,
+      team_slug: githubData.team,
+      "@": "AlmaCRH",
+      role: "member",
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+    console.log(data);
+
     const members = data.map((member) => member.login);
     return members;
   } catch (error) {
     console.error(error);
   }
 };
-
-module.exports = { getUsersPulls, loadApp };
+(async () => await getTeamMembers())();
+module.exports = { getUsersPulls };

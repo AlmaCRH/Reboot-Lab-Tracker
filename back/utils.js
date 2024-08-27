@@ -6,7 +6,7 @@ const { stdin: input, stdout: output } = require("node:process");
 const rl = readline.createInterface({ input, output });
 const githubData = {};
 
-rl.question("which team? ", (team) => {
+/* rl.question("which team? ", (team) => {
   const { loadScript } = require("./index.js");
   githubData["team"] = team;
   rl.question("which block do you want to see?", (block) => {
@@ -14,10 +14,10 @@ rl.question("which team? ", (team) => {
     rl.question("which lab? ", async (lab) => {
       githubData["lab"] = lab;
       rl.close();
-      loadScript();
+      await loadScript();
     });
   });
-});
+}); */
 
 const getItemFromStorageJSON = async () => {
   try {
