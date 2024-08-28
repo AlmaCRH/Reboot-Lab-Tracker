@@ -3,10 +3,8 @@ const path = require("path");
 const process = require("process");
 const { authenticate } = require("@google-cloud/local-auth");
 const { google } = require("googleapis");
-const { getUsersPulls } = require("./github");
-const { githubData } = require("./utils");
 
-const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
+const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -63,6 +61,7 @@ async function authorize() {
   if (client.credentials) {
     await saveCredentials(client);
   }
+
   return client;
 }
 
@@ -70,23 +69,20 @@ async function authorize() {
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 const writeIntersection = async (auth) => {
+  const { pullData } = require("./serverIO");
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const { rows, columns, startRow, endRow } = await getIndexWithBatchGet(
       sheets
     );
 
-    const pulls = await getUsersPulls();
-    const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
-    const columnsIndex = await getColumnIndex(columns, githubData.lab);
+    const rowIndex = await getRowIndex(rows, startRow, endRow, pullData.user);
+    const columnsIndex = await getColumnIndex(columns, pullData.repository);
 
-    const data = [];
-    rowsIndex.map((index) => {
-      data.push({
-        range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [[""]],
-      });
-    });
+    const data = {
+      range: `Lab Tracker!${columnsIndex}${rowIndex}`,
+      values: [[`Delivered at ${pullData.created_at}`]],
+    };
 
     const body = {
       data: data,
@@ -102,20 +98,16 @@ const writeIntersection = async (auth) => {
   }
 };
 
-const getRowIndex = async (pulls, rows, startRow, endRow) => {
+const getRowIndex = async (rows, startRow, endRow, userName) => {
   try {
-    const index = [];
-
     const offset = startRow;
 
     const adjustedStart = startRow - offset;
     const adjustedEnd = endRow - offset;
 
-    for (const pull of pulls) {
-      for (let i = adjustedStart; i < adjustedEnd; i++) {
-        if (rows[i] && rows[i].includes(pull.user)) {
-          index.push(i + offset + 4);
-        }
+    for (let i = adjustedStart; i < adjustedEnd; i++) {
+      if (rows[i] && rows[i].includes(userName)) {
+        return i + offset + 4;
       }
     }
 
@@ -133,20 +125,12 @@ const getIndexWithBatchGet = async (sheets) => {
     });
 
     const blocks = blocksRes.data.values.flat();
-    let endBlock;
-    if (githubData.block === "BLOCK 1") {
-      endBlock = "BLOCK 2";
-    } else if (githubData.block === "BLOCK 2") {
-      endBlock = "BLOCK 3";
-    } else {
-      endBlock = "TOTAL";
-    }
 
     const startRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === githubData.block
+      (value) => value.trim().toUpperCase() === "BLOCK 1"
     );
     const endRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === endBlock
+      (value) => value.trim().toUpperCase() === "BLOCK 2"
     );
 
     if (startRow === -1 || endRow === -1 || startRow >= endRow) {
@@ -165,7 +149,7 @@ const getIndexWithBatchGet = async (sheets) => {
     });
 
     const result = res.data.valueRanges;
-    const rows = result[0].values.flat().filter((value) => value !== undefined);
+    const rows = result[0].values.flat();
     const columns = result[1].values.flat();
 
     return { rows: rows, columns: columns, startRow: startRow, endRow: endRow };
