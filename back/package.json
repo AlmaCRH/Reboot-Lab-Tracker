@@ -73,7 +73,7 @@
     "server": "node utils.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "AlmaCRH",
   "license": "ISC",
   "description": ""
 }

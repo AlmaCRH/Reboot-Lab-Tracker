@@ -83,14 +83,11 @@ const getTeamMembers = async () => {
     const { data } = await octokit.request("GET /orgs/{org}/teams/", {
       org: organization,
       team_slug: githubData.team,
-      "@": "AlmaCRH",
       role: "member",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
       },
     });
-    console.log(data);
-
     const members = data.map((member) => member.login);
     return members;
   } catch (error) {
