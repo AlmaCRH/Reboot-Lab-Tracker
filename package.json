@@ -1,0 +1,48 @@
+{
+  "name": "front",
+  "private": true,
+  "version": "0.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && electron ./src/main/main.js \"",
+    "build": "vite build",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps",
+    "preview": "vite preview",
+    "start": "vite build && electron ./src/main/main.js"
+  },
+  "build": {
+    "appId": "reboot.tracker.app",
+    "productName": "Lab Tracker by Reboot Academy",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "dist/**/*",
+      "src/main/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/icon.png"
+    }
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "electron-builder": "^25.0.5",
+    "vue": "^3.4.37",
+    "wait-on": "^8.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.2",
+    "electron": "^32.0.1",
+    "vite": "^5.4.1"
+  }
+}

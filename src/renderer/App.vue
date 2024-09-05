@@ -10,14 +10,12 @@
       <Input type="select" @value="(value) => (text = value)" />
     </label>
     <button type="submit" @click="() => console.log(text)">Submit</button>
-    <HelloWorld msg="Vite + Vue" />
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref } from "vue";
 
-import HelloWorld from "./components/HelloWorld.vue";
 import Input from "./components/Input.vue";
 const text = ref("");
 </script>
