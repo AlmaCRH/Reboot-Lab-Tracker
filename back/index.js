@@ -6,7 +6,10 @@ const { google } = require("googleapis");
 const { getUsersPulls } = require("./github");
 const { githubData } = require("./utils");
 
-const SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
+const SCOPES = [
+  "https://www.googleapis.com/auth/spreadsheets.readonly",
+  "https://www.googleapis.com/auth/drive.metadata.readonly",
+];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -203,6 +206,28 @@ const loadScript = () => {
   authorize()
     .then((auth) => writeIntersection(auth))
     .catch(console.error);
+};
+
+// Drive API testing
+
+const listFiles = async (auth) => {
+  const drive = google.drive({ version: "v3", auth: auth });
+  const res = await drive.files.list({
+    q: "name contains 'Student Information'",
+    pageSize: 10,
+    fields: "nextPageToken, files(id,name)",
+    spaces: "drive",
+  });
+  const files = res.data.files;
+  if (files.length === 0) {
+    console.log("No files found.");
+    return;
+  }
+
+  const filesData = files.map((file) => {
+    return { fileName: file.name, fileID: file.id };
+  });
+  return filesData;
 };
 
 module.exports = { loadScript };
