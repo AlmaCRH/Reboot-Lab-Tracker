@@ -8,6 +8,7 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
+    icon: "./public/Logo_signature.png",
   });
   win.loadFile(path.join(__dirname, "dist", "index.html"));
   win.webContents.openDevTools();

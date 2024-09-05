@@ -1,18 +1,26 @@
-<script setup>
-import HelloWorld from "./components/HelloWorld.vue";
-</script>
-
 <template>
   <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="./assets/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+    <h1>Welcome to the Lab Tracker by Reboot Academy</h1>
+    <label
+      >First, we need the id of the spreadsheet you want to fill:
+      <Input type="text" @value="(value) => (text = value)" />
+    </label>
+    <label>
+      Now, select your team
+      <Input type="select" @value="(value) => (text = value)" />
+    </label>
+    <button type="submit" @click="() => console.log(text)">Submit</button>
     <HelloWorld msg="Vite + Vue" />
   </div>
 </template>
+
+<script setup>
+import { ref, watch } from "vue";
+
+import HelloWorld from "./components/HelloWorld.vue";
+import Input from "./components/Input.vue";
+const text = ref("");
+</script>
 
 <style scoped>
 .logo {
