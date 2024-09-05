@@ -10,14 +10,31 @@
       <Input type="select" @value="(value) => (text = value)" />
     </label>
     <button type="submit" @click="() => console.log(text)">Submit</button>
+    {{ a() }}
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-
+import { ref, onMounted } from "vue";
 import Input from "./components/Input.vue";
 const text = ref("");
+const a = async () => {
+  try {
+    await window.electron.ipcRenderer.invoke("myChannel", "hola");
+  } catch (error) {
+    console.error(error);
+  }
+};
+/* onMounted(() => {
+  window.electron.ipcRenderer.once("myChannel", (arg) => {
+    text.value = arg; // Update the message with the received data
+    console.log("Received:", arg);
+  });
+}); */
+/* window.electron.ipcRenderer.receive(
+  "myChannel",
+  (value) => (text.value = value)
+); */
 </script>
 
 <style scoped>

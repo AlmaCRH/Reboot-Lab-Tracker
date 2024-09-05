@@ -10,8 +10,5 @@ export default defineConfig({
   build: {
     outDir: "../../dist",
     emptyOutDir: true,
-    rollupOptions: {
-      input: "./index.html", // Path to the index.html file relative to root
-    },
   },
 });

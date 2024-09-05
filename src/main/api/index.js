@@ -202,9 +202,9 @@ const convertIndexToLetter = (index) => {
   return letter;
 };
 
-const loadScript = () => {
+const loadScript = (fun) => {
   authorize()
-    .then((auth) => writeIntersection(auth))
+    .then((auth) => fun(auth))
     .catch(console.error);
 };
 
@@ -229,7 +229,5 @@ const listFiles = async (auth) => {
   });
   return filesData;
 };
-  authorize()
-    .then((auth) => listFiles(auth))
-    .catch(console.error);
-module.exports = { loadScript };
+  
+module.exports = { loadScript, listFiles };
