@@ -20,5 +20,4 @@ const emit = defineEmits(["value"]);
 watch(input, (value) => {
   emit("value", value);
 });
-console.log(input);
 </script>

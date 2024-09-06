@@ -72,22 +72,25 @@ async function authorize() {
 /**
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
-const writeIntersection = async (auth) => {
+
+const writeIntersection = async (auth, lab, spreadsheetId) => {
+  const id = spreadsheetId;
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const { rows, columns, startRow, endRow } = await getIndexWithBatchGet(
-      sheets
+      sheets,
+      id
     );
 
     const pulls = await getUsersPulls();
     const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
-    const columnsIndex = await getColumnIndex(columns, githubData.lab);
+    const columnsIndex = await getColumnIndex(columns, lab);
 
     const data = [];
     rowsIndex.map((index) => {
       data.push({
         range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [[""]],
+        values: [["Fix"]],
       });
     });
 
@@ -97,7 +100,7 @@ const writeIntersection = async (auth) => {
     };
 
     return sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: process.env.SPREADSHEET_ID,
+      spreadsheetId: id,
       resource: body,
     });
   } catch (error) {
@@ -128,10 +131,10 @@ const getRowIndex = async (pulls, rows, startRow, endRow) => {
   }
 };
 
-const getIndexWithBatchGet = async (sheets) => {
+const getIndexWithBatchGet = async (sheets, id) => {
   try {
     const blocksRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SPREADSHEET_ID,
+      spreadsheetId: id,
       range: "Lab Tracker!A:A",
     });
 
@@ -163,7 +166,7 @@ const getIndexWithBatchGet = async (sheets) => {
     ];
 
     const res = await sheets.spreadsheets.values.batchGet({
-      spreadsheetId: process.env.SPREADSHEET_ID,
+      spreadsheetId: id,
       ranges: ranges,
     });
 
@@ -203,7 +206,12 @@ const convertIndexToLetter = (index) => {
 };
 
 const loadScript = (fun) => {
-  authorize()
+  if (typeof fun !== "function") {
+    console.error("Passed parameter is not a function");
+    return;
+  }
+
+  return authorize()
     .then((auth) => fun(auth))
     .catch(console.error);
 };
@@ -225,9 +233,11 @@ const listFiles = async (auth) => {
   }
 
   const filesData = files.map((file) => {
-    return { fileName: file.name, fileID: file.id };
+    const nameFormatted = file.name.replace("- Student Information", "");
+    return { name: nameFormatted, id: file.id };
   });
+
   return filesData;
 };
-  
-module.exports = { loadScript, listFiles };
+
+module.exports = { loadScript, listFiles, writeIntersection };

@@ -1,5 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
+const { loadScript, listFiles, writeIntersection } = require("./api/index");
+const { getUsersPulls } = require("./api/github");
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -10,10 +12,18 @@ const createWindow = () => {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    //icon: iconApp,
+    icon: "../assets/Logo_signature.png",
   });
   win.loadFile(path.join(__dirname, "../../dist", "index.html"));
-  win.webContents.openDevTools();
+
+  const contents = win.webContents;
+  contents.openDevTools();
+  contents.on("did-finish-load", async () => {
+    const bootcamps = await loadScript(listFiles);
+    contents.send("drive", bootcamps);
+    //console.log(await getUsersPulls("Bootcamp eCommerce"));
+    //contents.send("github", await getTeamMembers("bootcamp ia"));
+  });
 };
 
 app.whenReady().then(() => {
@@ -32,6 +42,6 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.handle("myChannel", async (event, data) => {
-  console.log(data);
+ipcMain.on("data", async (event, arg1, arg2) => {
+  console.log(await loadScript(writeIntersection(arg2, arg1)));
 });

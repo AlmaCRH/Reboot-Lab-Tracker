@@ -1,40 +1,19 @@
 <template>
   <div>
-    <h1>Welcome to the Lab Tracker by Reboot Academy</h1>
-    <label
-      >First, we need the id of the spreadsheet you want to fill:
-      <Input type="text" @value="(value) => (text = value)" />
-    </label>
-    <label>
-      Now, select your team
-      <Input type="select" @value="(value) => (text = value)" />
-    </label>
-    <button type="submit" @click="() => console.log(text)">Submit</button>
-    {{ a() }}
+    <Form :bootcamps="bootcamps" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import Input from "./components/Input.vue";
-const text = ref("");
-const a = async () => {
-  try {
-    await window.electron.ipcRenderer.invoke("myChannel", "hola");
-  } catch (error) {
-    console.error(error);
-  }
-};
-/* onMounted(() => {
-  window.electron.ipcRenderer.once("myChannel", (arg) => {
-    text.value = arg; // Update the message with the received data
-    console.log("Received:", arg);
+import { ref, onBeforeMount } from "vue";
+import Form from "./components/Form.vue";
+
+const bootcamps = ref([]);
+onBeforeMount(() => {
+  window.electron.ipcRenderer.once("drive", (event, arg) => {
+    bootcamps.value = arg;
   });
-}); */
-/* window.electron.ipcRenderer.receive(
-  "myChannel",
-  (value) => (text.value = value)
-); */
+});
 </script>
 
 <style scoped>
