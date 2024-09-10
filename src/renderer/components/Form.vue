@@ -1,7 +1,8 @@
 <template>
   <div>
     <label>
-      <select name="bootcamps" v-model="select">
+      Bootcamp:
+      <select name="bootcamps" v-model="bootcampSelect">
         <option value=""></option>
         <option
           v-for="(bootcamp, index) in bootcamps"
@@ -15,27 +16,33 @@
 
     <lable>
       Lab:
-      <input type="text" v-model="input" />
+      <select name="labs" v-model="labSelect">
+        <option value=""></option>
+        <option v-for="(lab, index) in labs" :key="index" :value="lab">
+          {{ lab }}
+        </option>
+      </select>
     </lable>
     <button @click="sendData">Send</button>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref } from "vue";
 const props = defineProps({
   bootcamps: Array,
+  labs: Array,
 });
 
 const emit = defineEmits(["value"]);
-const select = ref("");
-const input = ref("");
-
-watch(input, (value) => {
-  emit("value", value);
-});
+const bootcampSelect = ref("");
+const labSelect = ref("");
 
 const sendData = () => {
-  window.electron.ipcRenderer.send("data", select.value, input.value);
+  window.electron.ipcRenderer.send(
+    "data",
+    bootcampSelect.value,
+    labSelect.value
+  );
 };
 </script>
