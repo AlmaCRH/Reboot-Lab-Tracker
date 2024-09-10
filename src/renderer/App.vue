@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Form :bootcamps="bootcamps" />
+    <Form :bootcamps="bootcamps" :labs="labs" />
   </div>
 </template>
 
@@ -9,9 +9,13 @@ import { ref, onBeforeMount } from "vue";
 import Form from "./components/Form.vue";
 
 const bootcamps = ref([]);
+const labs = ref([]);
 onBeforeMount(() => {
   window.electron.ipcRenderer.once("drive", (event, arg) => {
     bootcamps.value = arg;
+  });
+  window.electron.ipcRenderer.once("github", (event, arg) => {
+    labs.value = arg;
   });
 });
 </script>

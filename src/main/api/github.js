@@ -1,8 +1,4 @@
-const {
-  getItemFromStorageJSON,
-  setItemInStorageJSON,
-  githubData,
-} = require("./utils");
+const { getItemFromStorageJSON, setItemInStorageJSON } = require("./utils");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
@@ -26,12 +22,12 @@ const loadApp = async () => {
   }
 };
 
-const getPulls = async () => {
+const getPulls = async (lab) => {
   try {
     const octokit = await loadApp();
     const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
-      owner: "edukami-ai",
-      repo: "LAB-JavaScript-JavaScript-Essentials",
+      owner: organization,
+      repo: lab,
       accept: "application/vnd.github+json",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
@@ -52,7 +48,7 @@ const getPulls = async () => {
   }
 };
 
-const getUsersPulls = async (team) => {
+const getUsersPulls = async (team, labName) => {
   try {
     let members = await getItemFromStorageJSON();
     let pullsList = await getItemFromStorageJSON("pulls");
@@ -62,22 +58,16 @@ const getUsersPulls = async (team) => {
       await setItemInStorageJSON(`members${team}`, usersList);
       members = { [`members${team}`]: usersList };
     }
-    if (
-      !pullsList ||
-      !pullsList[`pulls-${"LAB-JavaScript-JavaScript-Essentials"}`]
-    ) {
-      const allPulls = await getPulls();
-      await setItemInStorageJSON(
-        `pulls-${"LAB-JavaScript-JavaScript-Essentials"}`,
-        allPulls
-      );
+    if (!pullsList || !pullsList[`pulls-${labName}`]) {
+      const allPulls = await getPulls(labName);
+      await setItemInStorageJSON(`pulls-${labName}`, allPulls);
       pullsList = {
-        [`pulls-${"LAB-JavaScript-JavaScript-Essentials"}`]: allPulls,
+        [`pulls-${labName}`]: allPulls,
       };
     }
     const filteredPullsByTeamMembers = pullsList[
-      `pulls-${"LAB-JavaScript-JavaScript-Essentials"}`
-    ].filter((el) => members[`members${team}`].includes(el.user));
+      `pulls-${labName}`
+    ].filter((el) => members[`members${team}`]?.includes(el.user));
 
     return filteredPullsByTeamMembers;
   } catch (error) {
@@ -89,19 +79,20 @@ const getTeamMembers = async (selectedTeam) => {
   try {
     const octokit = await loadApp();
     const teams = await octokit.request("GET /orgs/{org}/teams", {
-      org: "edukami-ai",
+      org: organization,
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
       },
     });
-    const team = teams.data.filter((team) => {
+
+    const team = teams?.data.filter((team) => {
       return team.name.toLowerCase().includes(selectedTeam.toLowerCase());
     });
     const teamSlug = team[0].name.toLowerCase().replace(/\s+/g, "-");
     const { data } = await octokit.request(
       "GET /orgs/{org}/teams/{team_slug}/members",
       {
-        org: "edukami-ai",
+        org: organization,
         team_slug: teamSlug,
         role: "member",
         headers: {
@@ -117,4 +108,18 @@ const getTeamMembers = async (selectedTeam) => {
   }
 };
 
-module.exports = { getUsersPulls };
+const getAllLabs = async () => {
+  try {
+    const octokit = await loadApp();
+    const { data } = await octokit.request("GET /orgs/{org}/repos", {
+      org: organization,
+      type: "all",
+      per_page: 100,
+    });
+    const labs = data.map((lab) => lab.name);
+    return labs;
+  } catch (error) {
+    console.error(error);
+  }
+};
+module.exports = { getUsersPulls, getAllLabs };

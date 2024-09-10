@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { loadScript, listFiles, writeIntersection } = require("./api/index");
-const { getUsersPulls } = require("./api/github");
+const { getAllLabs } = require("./api/github");
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -20,9 +20,9 @@ const createWindow = () => {
   contents.openDevTools();
   contents.on("did-finish-load", async () => {
     const bootcamps = await loadScript(listFiles);
+    const labs = await getAllLabs();
     contents.send("drive", bootcamps);
-    //console.log(await getUsersPulls("Bootcamp eCommerce"));
-    //contents.send("github", await getTeamMembers("bootcamp ia"));
+    contents.send("github", labs);
   });
 };
 
@@ -43,5 +43,6 @@ app.on("window-all-closed", () => {
 });
 
 ipcMain.on("data", async (event, arg1, arg2) => {
-  console.log(await loadScript(writeIntersection(arg2, arg1)));
+  const dataForGoogleAndGithubAPI = { bootcampId: arg1, labName: arg2 };
+  await loadScript(writeIntersection, dataForGoogleAndGithubAPI);
 });

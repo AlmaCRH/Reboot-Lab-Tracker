@@ -4,10 +4,9 @@ const process = require("process");
 const { authenticate } = require("@google-cloud/local-auth");
 const { google } = require("googleapis");
 const { getUsersPulls } = require("./github");
-const { githubData } = require("./utils");
 
 const SCOPES = [
-  "https://www.googleapis.com/auth/spreadsheets.readonly",
+  "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/drive.metadata.readonly",
 ];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -73,18 +72,18 @@ async function authorize() {
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 
-const writeIntersection = async (auth, lab, spreadsheetId) => {
-  const id = spreadsheetId;
+const writeIntersection = async (auth, googleData) => {
+  const { bootcampId, labName } = googleData;
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const { rows, columns, startRow, endRow } = await getIndexWithBatchGet(
       sheets,
-      id
+      bootcampId
     );
 
-    const pulls = await getUsersPulls();
+    const pulls = await getUsersPulls("Bootcamp eCommerce 01", labName);
     const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
-    const columnsIndex = await getColumnIndex(columns, lab);
+    const columnsIndex = await getColumnIndex(columns, labName);
 
     const data = [];
     rowsIndex.map((index) => {
@@ -100,7 +99,7 @@ const writeIntersection = async (auth, lab, spreadsheetId) => {
     };
 
     return sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: id,
+      spreadsheetId: bootcampId,
       resource: body,
     });
   } catch (error) {
@@ -137,22 +136,21 @@ const getIndexWithBatchGet = async (sheets, id) => {
       spreadsheetId: id,
       range: "Lab Tracker!A:A",
     });
-
     const blocks = blocksRes.data.values.flat();
     let endBlock;
-    if (githubData.block === "BLOCK 1") {
+    if (null === "BLOCK 1") {
       endBlock = "BLOCK 2";
-    } else if (githubData.block === "BLOCK 2") {
+    } else if (null === "BLOCK 2") {
       endBlock = "BLOCK 3";
     } else {
       endBlock = "TOTAL";
     }
 
     const startRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === githubData.block
+      (value) => value.trim().toUpperCase() === "BLOCK 1"
     );
     const endRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === endBlock
+      (value) => value.trim().toUpperCase() === "BLOCK 2"
     );
 
     if (startRow === -1 || endRow === -1 || startRow >= endRow) {
@@ -205,14 +203,14 @@ const convertIndexToLetter = (index) => {
   return letter;
 };
 
-const loadScript = (fun) => {
+const loadScript = (fun, arg1, arg2) => {
   if (typeof fun !== "function") {
     console.error("Passed parameter is not a function");
     return;
   }
 
   return authorize()
-    .then((auth) => fun(auth))
+    .then((auth) => fun(auth, arg1, arg2))
     .catch(console.error);
 };
 
