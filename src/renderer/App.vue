@@ -1,36 +1,11 @@
 <template>
-  <div v-if="loading" class="loader"></div>
-
-  <template v-else>
-    <Form :bootcamps="bootcamps" :labs="labs" />
-  </template>
-
+  <RouterView />
+  <button @click="router.go(-1)">Go back</button>
 </template>
 
 <script setup>
-import { ref, onBeforeMount } from "vue";
-import { createRouter } from "vue-router";
-import Form from "./components/Form.vue";
-
-const bootcamps = ref([]);
-const labs = ref([]);
-const loading = ref(true);
-onBeforeMount(() => {
-  window.electron.ipcRenderer.once("drive", (event, arg) => {
-    bootcamps.value = arg;
-    checkLoading();
-  });
-  window.electron.ipcRenderer.once("github", (event, arg) => {
-    labs.value = arg;
-    checkLoading();
-  });
-});
-
-const checkLoading = () => {
-  if (bootcamps.value.length && labs.value.length) {
-    loading.value = false;
-  }
-};
+import { RouterView } from "vue-router";
+import router from "./router/router";
 </script>
 
 <style scoped>

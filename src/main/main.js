@@ -12,18 +12,12 @@ const createWindow = () => {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: "../assets/Logo_signature.png",
+    icon: "../assets/LogoSignature.png",
   });
   win.loadFile(path.join(__dirname, "../../dist", "index.html"));
 
   const contents = win.webContents;
   contents.openDevTools();
-  contents.on("did-finish-load", async () => {
-    const bootcamps = await loadScript(listFiles);
-    const labs = await getAllLabs();
-    contents.send("drive", bootcamps);
-    contents.send("github", labs);
-  });
 };
 
 app.whenReady().then(() => {
@@ -40,6 +34,14 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+ipcMain.on("sendDataToFront", async (event) => {
+  const contents = event.sender;
+  const bootcamps = await loadScript(listFiles);
+  const labs = await getAllLabs();
+  contents.send("drive", bootcamps);
+  contents.send("github", labs);
 });
 
 ipcMain.on("frontChannel", async (event, frontData) => {

@@ -83,16 +83,19 @@ const writeIntersection = async (auth, frontData) => {
     );
 
     const pulls = await getUsersPulls("Bootcamp eCommerce 01", lab);
-    const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
+    const { index, pullDate } = await getRowIndex(
+      pulls,
+      rows,
+      startRow,
+      endRow
+    );
     const columnsIndex = await getColumnIndex(columns, lab);
     const data = [];
 
-    rowsIndex.map((index) => {
-      pulls.map((pull) => {
-        data.push({
-          range: `Lab Tracker!${columnsIndex}${index}`,
-          values: [[`Delivered at ${formatPullDate(pull.created_at)}`]],
-        });
+    index.map((index) => {
+      data.push({
+        range: `Lab Tracker!${columnsIndex}${index}`,
+        values: [[`Delivered at ${formatPullDate(pullDate[index])}`]],
       });
     });
 
@@ -131,7 +134,7 @@ const formatPullDate = (date) => {
 const getRowIndex = async (pulls, rows, startRow, endRow) => {
   try {
     const index = [];
-
+    const pullDate = {};
     const offset = startRow;
 
     const adjustedStart = startRow - offset;
@@ -140,12 +143,13 @@ const getRowIndex = async (pulls, rows, startRow, endRow) => {
     for (const pull of pulls) {
       for (let i = adjustedStart; i < adjustedEnd; i++) {
         if (rows[i] && rows[i].includes(pull.user)) {
+          pullDate[i + offset + 4] = pull.created_at;
           index.push(i + offset + 4);
         }
       }
     }
 
-    return index;
+    return { index: index, pullDate: pullDate };
   } catch (error) {
     console.log(error);
   }
