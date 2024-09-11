@@ -13,7 +13,15 @@
         </option>
       </select>
     </label>
-
+    <lable>
+      Block:
+      <select name="blocks" v-model="blockSelect">
+        <option value=""></option>
+        <option value="BLOCK 1">BLOCK 1</option>
+        <option value="BLOCK 2">BLOCK 2</option>
+        <option value="BLOCK 3">BLOCK 3</option>
+      </select>
+    </lable>
     <lable>
       Lab:
       <select name="labs" v-model="labSelect">
@@ -34,15 +42,16 @@ const props = defineProps({
   labs: Array,
 });
 
-const emit = defineEmits(["value"]);
 const bootcampSelect = ref("");
 const labSelect = ref("");
+const blockSelect = ref("");
 
 const sendData = () => {
-  window.electron.ipcRenderer.send(
-    "data",
-    bootcampSelect.value,
-    labSelect.value
-  );
+  const frontData = {
+    bootcamp: bootcampSelect.value,
+    lab: labSelect.value,
+    block: blockSelect.value,
+  };
+  window.electron.ipcRenderer.send("frontChannel", frontData);
 };
 </script>

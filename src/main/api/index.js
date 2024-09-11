@@ -72,24 +72,27 @@ async function authorize() {
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 
-const writeIntersection = async (auth, googleData) => {
-  const { bootcampId, labName } = googleData;
+const writeIntersection = async (auth, frontData) => {
+  const { bootcamp, lab, block } = frontData;
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const { rows, columns, startRow, endRow } = await getIndexWithBatchGet(
       sheets,
-      bootcampId
+      bootcamp,
+      block
     );
 
-    const pulls = await getUsersPulls("Bootcamp eCommerce 01", labName);
+    const pulls = await getUsersPulls("Bootcamp eCommerce 01", lab);
     const rowsIndex = await getRowIndex(pulls, rows, startRow, endRow);
-    const columnsIndex = await getColumnIndex(columns, labName);
-
+    const columnsIndex = await getColumnIndex(columns, lab);
     const data = [];
+
     rowsIndex.map((index) => {
-      data.push({
-        range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [["Fix"]],
+      pulls.map((pull) => {
+        data.push({
+          range: `Lab Tracker!${columnsIndex}${index}`,
+          values: [[`Delivered at ${formatPullDate(pull.created_at)}`]],
+        });
       });
     });
 
@@ -99,12 +102,30 @@ const writeIntersection = async (auth, googleData) => {
     };
 
     return sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: bootcampId,
+      spreadsheetId: bootcamp,
       resource: body,
     });
   } catch (error) {
     console.log(error);
   }
+};
+
+const formatPullDate = (date) => {
+  const dateStr = date;
+  const dateObj = new Date(dateStr);
+
+  const formattedDate = dateObj
+    .toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .replace(",", "");
+
+  return formattedDate;
 };
 
 const getRowIndex = async (pulls, rows, startRow, endRow) => {
@@ -130,27 +151,29 @@ const getRowIndex = async (pulls, rows, startRow, endRow) => {
   }
 };
 
-const getIndexWithBatchGet = async (sheets, id) => {
+const getIndexWithBatchGet = async (sheets, bootcampId, block) => {
   try {
     const blocksRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: id,
+      spreadsheetId: bootcampId,
       range: "Lab Tracker!A:A",
     });
+
     const blocks = blocksRes.data.values.flat();
+
     let endBlock;
-    if (null === "BLOCK 1") {
+    if (block === "BLOCK 1") {
       endBlock = "BLOCK 2";
-    } else if (null === "BLOCK 2") {
+    } else if (block === "BLOCK 2") {
       endBlock = "BLOCK 3";
     } else {
       endBlock = "TOTAL";
     }
 
     const startRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === "BLOCK 1"
+      (value) => value.trim().toUpperCase() === block
     );
     const endRow = blocks.findIndex(
-      (value) => value.trim().toUpperCase() === "BLOCK 2"
+      (value) => value.trim().toUpperCase() === endBlock
     );
 
     if (startRow === -1 || endRow === -1 || startRow >= endRow) {
@@ -164,7 +187,7 @@ const getIndexWithBatchGet = async (sheets, id) => {
     ];
 
     const res = await sheets.spreadsheets.values.batchGet({
-      spreadsheetId: id,
+      spreadsheetId: bootcampId,
       ranges: ranges,
     });
 

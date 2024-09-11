@@ -42,7 +42,6 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.on("data", async (event, arg1, arg2) => {
-  const dataForGoogleAndGithubAPI = { bootcampId: arg1, labName: arg2 };
-  await loadScript(writeIntersection, dataForGoogleAndGithubAPI);
+ipcMain.on("frontChannel", async (event, frontData) => {
+  await loadScript(writeIntersection, frontData);
 });
