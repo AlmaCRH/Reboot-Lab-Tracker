@@ -4,7 +4,6 @@ const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
 const installationID = process.env.INSTALLATION_ID;
 const organization = process.env.ORG;
-const webhookSecret = process.env.WEBHOOK_SECRET;
 
 const loadApp = async () => {
   try {
@@ -12,9 +11,6 @@ const loadApp = async () => {
     const app = new App({
       appId: appID,
       privateKey: privateKey,
-      webhooks: {
-        secret: webhookSecret,
-      },
     });
     return app.getInstallationOctokit(installationID);
   } catch (error) {
@@ -65,9 +61,9 @@ const getUsersPulls = async (team, labName) => {
         [`pulls-${labName}`]: allPulls,
       };
     }
-    const filteredPullsByTeamMembers = pullsList[
-      `pulls-${labName}`
-    ].filter((el) => members[`members${team}`]?.includes(el.user));
+    const filteredPullsByTeamMembers = pullsList[`pulls-${labName}`].filter(
+      (el) => members[`members${team}`]?.includes(el.user)
+    );
 
     return filteredPullsByTeamMembers;
   } catch (error) {
