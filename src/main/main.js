@@ -20,12 +20,10 @@ const createWindow = () => {
   contents.openDevTools();
 };
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
-
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length == 0) {
-      createWindow();
     }
   });
 });
