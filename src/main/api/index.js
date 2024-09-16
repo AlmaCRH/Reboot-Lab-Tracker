@@ -73,12 +73,13 @@ async function authorize() {
  */
 
 const writeIntersection = async (auth, frontData) => {
-  const { bootcamp, lab, block } = frontData;
+  const { bootcampID, bootcampName, lab, block } = frontData;
+  const teamName = bootcampName.toLowerCase().replace(/\s+/g, "-");
   try {
     const sheets = google.sheets({ version: "v4", auth });
     const { rows, columns, startRow, endRow } = await getIndexWithBatchGet(
       sheets,
-      bootcamp,
+      bootcampID,
       block
     );
 
@@ -105,7 +106,7 @@ const writeIntersection = async (auth, frontData) => {
     };
 
     return sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: bootcamp,
+      spreadsheetId: bootcampID,
       resource: body,
     });
   } catch (error) {

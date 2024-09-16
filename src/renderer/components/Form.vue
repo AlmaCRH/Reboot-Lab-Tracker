@@ -7,7 +7,7 @@
         <option
           v-for="(bootcamp, index) in bootcamps"
           :key="index"
-          :value="bootcamp.id"
+          :value="{ id: bootcamp.id, name: bootcamp.name }"
         >
           {{ bootcamp.name }}
         </option>
@@ -41,14 +41,15 @@ const props = defineProps({
   bootcamps: Array,
   labs: Array,
 });
-
 const bootcampSelect = ref("");
 const labSelect = ref("");
 const blockSelect = ref("");
 
 const sendData = () => {
+  const { id, name } = bootcampSelect.value;
   const frontData = {
-    bootcamp: bootcampSelect.value,
+    bootcampID: id,
+    bootcampName: name,
     lab: labSelect.value,
     block: blockSelect.value,
   };

@@ -12,4 +12,16 @@ const createTeamAndUsers = async (team, members) => {
   }
 };
 
-module.exports = { createTeamAndUsers };
+const getTeamAndUsers = async (team) => {
+  try {
+    const { data } = await api.get("teams/members", {
+      params: {
+        team: team,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+module.exports = { createTeamAndUsers, getTeamAndUsers };

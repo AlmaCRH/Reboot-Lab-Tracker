@@ -1,4 +1,8 @@
-const { getItemFromStorageJSON, setItemInStorageJSON } = require("./utils");
+const {
+  createTeamAndUsers,
+  getTeamAndUsers,
+} = require("../services/teams.services");
+const { createLabsAndPulls } = require("../services/labs.services");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
@@ -18,12 +22,12 @@ const loadApp = async () => {
   }
 };
 
-const getPulls = async (lab) => {
+const getPulls = async (labName) => {
   try {
     const octokit = await loadApp();
     const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
       owner: organization,
-      repo: lab,
+      repo: labName,
       accept: "application/vnd.github+json",
       headers: {
         "X-GitHub-Api-Version": "2022-11-28",
@@ -35,9 +39,11 @@ const getPulls = async (lab) => {
     });
     const pulls = data.map((pullData) => ({
       created_at: pullData.created_at,
+      updated_at: pullData.updated_at,
       user: pullData.user.login,
     }));
 
+    await createLabsAndPulls({ lab: labName, pulls: pulls });
     return pulls;
   } catch (error) {
     console.error(error);
@@ -45,46 +51,35 @@ const getPulls = async (lab) => {
 };
 
 const getUsersPulls = async (team, labName) => {
+  const teamSlug = team.toLowerCase().replace(/\s+/g, "-");
   try {
-    let members = await getItemFromStorageJSON();
-    let pullsList = await getItemFromStorageJSON("pulls");
+    const teamAndUsersData = await getTeamAndUsers(teamSlug);
 
-    if (!members || !members[`members${team}`]) {
-      const usersList = await getTeamMembers(team);
-      await setItemInStorageJSON(`members${team}`, usersList);
-      members = { [`members${team}`]: usersList };
-    }
-    if (!pullsList || !pullsList[`pulls-${labName}`]) {
-      const allPulls = await getPulls(labName);
-      await setItemInStorageJSON(`pulls-${labName}`, allPulls);
-      pullsList = {
-        [`pulls-${labName}`]: allPulls,
-      };
-    }
-    const filteredPullsByTeamMembers = pullsList[`pulls-${labName}`].filter(
+    const members = teamAndUsersData
+      ? teamAndUsersData
+      : await getTeamMembers(team);
+
+    const labAndPullsData = await getLabAndPulls(labName);
+
+    const pulls = labAndPullsData ? labAndPullsData : await getPulls(labName);
+
+    
+
+    /*    const filteredPullsByTeamMembers = pullsList[`pulls-${labName}`].filter(
       (el) => members[`members${team}`]?.includes(el.user)
     );
 
-    return filteredPullsByTeamMembers;
+    return filteredPullsByTeamMembers; */
   } catch (error) {
     console.error(error);
   }
 };
 
 const getTeamMembers = async (selectedTeam) => {
+  const teamSlug = selectedTeam.toLowerCase().replace(/\s+/g, "-");
   try {
     const octokit = await loadApp();
-    const teams = await octokit.request("GET /orgs/{org}/teams", {
-      org: organization,
-      headers: {
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    });
 
-    const team = teams?.data.filter((team) => {
-      return team.name.toLowerCase().includes(selectedTeam.toLowerCase());
-    });
-    const teamSlug = team[0].name.toLowerCase().replace(/\s+/g, "-");
     const { data } = await octokit.request(
       "GET /orgs/{org}/teams/{team_slug}/members",
       {
@@ -98,6 +93,7 @@ const getTeamMembers = async (selectedTeam) => {
     );
 
     const members = data.map((member) => member.login);
+    await createTeamAndUsers(teamSlug, members);
     return members;
   } catch (error) {
     console.error(error);
