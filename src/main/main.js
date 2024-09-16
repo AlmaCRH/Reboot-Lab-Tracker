@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { loadScript, listFiles, writeIntersection } = require("./api/index");
@@ -22,8 +23,10 @@ const createWindow = () => {
 
 app.whenReady().then(async () => {
   createWindow();
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length == 0) {
+      createWindow();
     }
   });
 });
