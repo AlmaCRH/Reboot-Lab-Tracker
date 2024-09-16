@@ -9,4 +9,17 @@ const createLabsAndPulls = async (body) => {
   }
 };
 
-module.exports = { createLabsAndPulls };
+const getLabAndPulls = async (labName) => {
+  try {
+    const { data } = api.get("labs/pulls", {
+      params: {
+        labName: labName,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+module.exports = { createLabsAndPulls, getLabAndPulls };

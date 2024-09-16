@@ -2,7 +2,10 @@ const {
   createTeamAndUsers,
   getTeamAndUsers,
 } = require("../services/teams.services");
-const { createLabsAndPulls } = require("../services/labs.services");
+const {
+  createLabsAndPulls,
+  getLabAndPulls,
+} = require("../services/labs.services");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
