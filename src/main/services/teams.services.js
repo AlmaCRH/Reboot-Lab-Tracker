@@ -12,6 +12,16 @@ const createTeamAndUsers = async (team, members) => {
   }
 };
 
+const addLabToTeam = async (body) => {
+  try {
+    console.log(body);
+    const response = await api.post("teams/labs", body);
+    return response;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const getTeamAndUsers = async (team) => {
   try {
     const { data } = await api.get("teams/members", {
@@ -24,4 +34,4 @@ const getTeamAndUsers = async (team) => {
     console.error(error);
   }
 };
-module.exports = { createTeamAndUsers, getTeamAndUsers };
+module.exports = { createTeamAndUsers, getTeamAndUsers, addLabToTeam };
