@@ -14,7 +14,6 @@ const createTeamAndUsers = async (team, members) => {
 
 const addLabToTeam = async (body) => {
   try {
-    console.log(body);
     const response = await api.post("teams/labs", body);
     return response;
   } catch (error) {

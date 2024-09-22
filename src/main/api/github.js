@@ -8,6 +8,8 @@ const {
   getLabAndPulls,
 } = require("../services/labs.services");
 
+const { addUserToPulls } = require("../services/pulls.services");
+
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
 const installationID = process.env.INSTALLATION_ID;
@@ -41,16 +43,29 @@ const getPulls = async (labName, teamName) => {
       direction: "desc",
       per_page: 50,
     });
+
     const pulls = data.map((pullData) => ({
+      githubUser: pullData.user.login,
       repo_url: pullData.html_url,
-      pr_numer: pullData.milestone.number,
+      pr_number: pullData.number,
       pr_status: pullData.state,
-      created_at: pullData.created_at,
-      updated_at: pullData.updated_at,
-      user: pullData.login,
+      createdAt: pullData.created_at,
+      updatedAt: pullData.updated_at,
     }));
 
+    if (!pulls || pulls.length === 0) {
+      console.log("No pulls found");
+      return;
+    }
+
+    await createLabsAndPulls({
+      lab: labName,
+      pulls: pulls,
+    });
+
     await addLabToTeam({ teamName, labName });
+
+    await addUserToPulls({ pulls: pulls });
 
     return pulls;
   } catch (error) {
@@ -65,19 +80,12 @@ const getUsersPulls = async (team, labName) => {
 
     //await getTeamMembers(teamSlug);
 
-    const users = await getTeamAndUsers(teamSlug);
+    const users = await getTeamMembers(teamSlug);
 
     //This function goes the same as the above
     //const labAndPullsData = await getLabAndPulls(labName);
-
     //This function is deprecetated because just search for all the pulls without filter it by team
     const pulls = await getPulls(labName, teamSlug);
-
-    await createLabsAndPulls({
-      lab: labName,
-      pulls: pulls,
-      members: users.users,
-    });
 
     // In case the function getPullsByTeam was empty, call the addLabsToTeam etc...
     // Create addLabsToTeam
