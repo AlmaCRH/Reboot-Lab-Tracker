@@ -9,4 +9,13 @@ const addUserToPulls = async (body) => {
   }
 };
 
-module.exports = { addUserToPulls };
+const getPullsByUsers = async (userId) => {
+  try {
+    const { data } = await api.get(`/pulls/users`, { params: { userId } });
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+module.exports = { addUserToPulls, getPullsByUsers };

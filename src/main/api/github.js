@@ -2,13 +2,14 @@ const {
   createTeamAndUsers,
   getTeamAndUsers,
   addLabToTeam,
+  getTeamAndLab,
 } = require("../services/teams.services");
-const {
-  createLabsAndPulls,
-  getLabAndPulls,
-} = require("../services/labs.services");
+const { createLabsAndPulls } = require("../services/labs.services");
 
-const { addUserToPulls } = require("../services/pulls.services");
+const {
+  addUserToPulls,
+  getPullsByUsers,
+} = require("../services/pulls.services");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
@@ -62,7 +63,6 @@ const getPulls = async (labName, teamName) => {
       lab: labName,
       pulls: pulls,
     });
-
     await addLabToTeam({ teamName, labName });
 
     await addUserToPulls({ pulls: pulls });
@@ -76,15 +76,13 @@ const getPulls = async (labName, teamName) => {
 const getUsersPulls = async (team, labName) => {
   const teamSlug = team.toLowerCase().replace(/\s+/g, "-");
   try {
-    // const teamAndUsersData = await getTeamAndUsers(teamSlug);
-
-    //await getTeamMembers(teamSlug);
-
-    const users = await getTeamMembers(teamSlug);
+    const teamMembers = await getTeamAndUsers(teamSlug);
+    const users = teamMembers ? teamMembers : await getTeamMembers(teamSlug);
 
     //This function goes the same as the above
     //const labAndPullsData = await getLabAndPulls(labName);
     //This function is deprecetated because just search for all the pulls without filter it by team
+
     const pulls = await getPulls(labName, teamSlug);
 
     // In case the function getPullsByTeam was empty, call the addLabsToTeam etc...
