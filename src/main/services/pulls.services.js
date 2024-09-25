@@ -1,8 +1,8 @@
 const { api } = require("./instance.js");
 
-const addUserToPulls = async (body) => {
+const createPullsWithUsersAndLab = async (body) => {
   try {
-    const response = await api.put("/pulls/user", body);
+    const response = await api.post("/pulls/users", body);
     return response;
   } catch (error) {
     console.error(error);
@@ -18,4 +18,4 @@ const getPullsByUsers = async (userId) => {
   }
 };
 
-module.exports = { addUserToPulls, getPullsByUsers };
+module.exports = { createPullsWithUsersAndLab, getPullsByUsers };

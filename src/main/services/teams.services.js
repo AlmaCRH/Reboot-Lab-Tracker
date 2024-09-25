@@ -21,11 +21,12 @@ const addLabToTeam = async (body) => {
   }
 };
 
-const getTeamAndUsers = async (team) => {
+const getUsersWithTeamsAndPullsByLab = async (teamName) => {
   try {
     const { data } = await api.get("teams/members", {
       params: {
-        team: team,
+        teamName: teamName,
+        labName: labName,
       },
     });
     return data;
@@ -45,7 +46,7 @@ const getTeamAndLab = async () => {
 
 module.exports = {
   createTeamAndUsers,
-  getTeamAndUsers,
+  getUsersWithTeamsAndPullsByLab,
   addLabToTeam,
   getTeamAndLab,
 };

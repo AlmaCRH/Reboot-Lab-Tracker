@@ -1,14 +1,11 @@
 const {
   createTeamAndUsers,
-  getTeamAndUsers,
+  getUsersWithTeamsAndPullsByLab,
   addLabToTeam,
-  getTeamAndLab,
 } = require("../services/teams.services");
-const { createLabsAndPulls } = require("../services/labs.services");
 
 const {
-  addUserToPulls,
-  getPullsByUsers,
+  createPullsWithUsersAndLab,
 } = require("../services/pulls.services");
 
 const appID = process.env.APP_ID;
@@ -59,13 +56,9 @@ const getPulls = async (labName, teamName) => {
       return;
     }
 
-    await createLabsAndPulls({
-      lab: labName,
-      pulls: pulls,
-    });
     await addLabToTeam({ teamName, labName });
 
-    await addUserToPulls({ pulls: pulls });
+    await createPullsWithUsersAndLab({ pullsData: pulls, lab: labName });
 
     return pulls;
   } catch (error) {
@@ -76,20 +69,15 @@ const getPulls = async (labName, teamName) => {
 const getUsersPulls = async (team, labName) => {
   const teamSlug = team.toLowerCase().replace(/\s+/g, "-");
   try {
-    const teamMembers = await getTeamAndUsers(teamSlug);
-    const users = teamMembers ? teamMembers : await getTeamMembers(teamSlug);
+    
+    const pullsList = await getUsersWithTeamsAndPullsByLab(teamSlug, labName);
 
-    //This function goes the same as the above
-    //const labAndPullsData = await getLabAndPulls(labName);
-    //This function is deprecetated because just search for all the pulls without filter it by team
-
-    const pulls = await getPulls(labName, teamSlug);
-
-    // In case the function getPullsByTeam was empty, call the addLabsToTeam etc...
-    // Create addLabsToTeam
-
-    // Create addUsersToPulls
-
+    const members = pullsList ? pullsList : await getTeamMembers(teamSlug);
+    
+    //const pullsFromDB = await getPullsFromDB(labName, teamSlug);
+    
+     await getPulls(labName, teamSlug);
+    
     /*    const filteredPullsByTeamMembers = pullsList[`pulls-${labName}`].filter(
       (el) => members[`members${team}`]?.includes(el.user)
     );
