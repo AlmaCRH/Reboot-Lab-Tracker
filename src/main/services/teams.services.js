@@ -29,7 +29,7 @@ const getUsersWithTeamsAndPullsByLab = async (teamName, labName) => {
         labName: labName,
       },
     });
-    return data;
+    return data === "" ? null : data;
   } catch (error) {
     console.error(error);
   }

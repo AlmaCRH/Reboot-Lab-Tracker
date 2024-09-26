@@ -92,11 +92,11 @@ const writeIntersection = async (auth, frontData) => {
     );
     const columnsIndex = await getColumnIndex(columns, lab);
     const data = [];
-
+    console.log(pullDate);
     index.map((index) => {
       data.push({
         range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [[`Delivered at ${formatPullDate(pullDate[index])}`]],
+        values: [[`Delivered at ${pullDate}`]],
       });
     });
 
@@ -141,10 +141,11 @@ const getRowIndex = async (pulls, rows, startRow, endRow) => {
     const adjustedStart = startRow - offset;
     const adjustedEnd = endRow - offset;
 
-    for (const pull of pulls) {
+    for (const pull of pulls.users) {
       for (let i = adjustedStart; i < adjustedEnd; i++) {
-        if (rows[i] && rows[i].includes(pull.user)) {
-          pullDate[i + offset + 4] = pull.created_at;
+        if (rows[i] && rows[i].includes(pull.username)) {
+          pullDate[i + offset + 4] =
+            pull.pullRequests[0]?.createdAt === undefined;
           index.push(i + offset + 4);
         }
       }

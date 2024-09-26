@@ -69,19 +69,19 @@ const getUsersPulls = async (team, labName) => {
   try {
     const pullsList = await getUsersWithTeamsAndPullsByLab(teamSlug, labName);
 
-    const data = pullsList
-      ? pullsList
-      : (await getTeamMembers(teamSlug)) && (await getPulls(labName, teamSlug));
+    if (pullsList) {
+      console.log("Pulls found");
+      return pullsList;
+    } else {
+      console.log("not found");
+      const members = await getTeamMembers(teamSlug);
+      const pulls = await getPulls(labName, teamSlug);
 
-    //const pullsFromDB = await getPullsFromDB(labName, teamSlug);
-
-    // await getPulls(labName, teamSlug);
-    console.log(data);
-    /*    const filteredPullsByTeamMembers = pullsList[`pulls-${labName}`].filter(
-      (el) => members[`members${team}`]?.includes(el.user)
-    );
-
-    return filteredPullsByTeamMembers; */
+      const filteredPullsByTeamMembers = pulls.filter((el) =>
+        members?.includes(el.githubUser)
+      );
+      return filteredPullsByTeamMembers;
+    }
   } catch (error) {
     console.error(error);
   }
@@ -104,7 +104,6 @@ const getTeamMembers = async (selectedTeam) => {
     );
 
     const members = data.map((member) => member.login);
-
     await createTeamAndUsers(selectedTeam, members);
     return members;
   } catch (error) {
