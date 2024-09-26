@@ -21,7 +21,7 @@ const addLabToTeam = async (body) => {
   }
 };
 
-const getUsersWithTeamsAndPullsByLab = async (teamName) => {
+const getUsersWithTeamsAndPullsByLab = async (teamName, labName) => {
   try {
     const { data } = await api.get("teams/members", {
       params: {

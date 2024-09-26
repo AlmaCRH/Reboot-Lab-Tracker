@@ -4,9 +4,7 @@ const {
   addLabToTeam,
 } = require("../services/teams.services");
 
-const {
-  createPullsWithUsersAndLab,
-} = require("../services/pulls.services");
+const { createPullsWithUsersAndLab } = require("../services/pulls.services");
 
 const appID = process.env.APP_ID;
 const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
@@ -69,15 +67,16 @@ const getPulls = async (labName, teamName) => {
 const getUsersPulls = async (team, labName) => {
   const teamSlug = team.toLowerCase().replace(/\s+/g, "-");
   try {
-    
     const pullsList = await getUsersWithTeamsAndPullsByLab(teamSlug, labName);
 
-    const members = pullsList ? pullsList : await getTeamMembers(teamSlug);
-    
+    const data = pullsList
+      ? pullsList
+      : (await getTeamMembers(teamSlug)) && (await getPulls(labName, teamSlug));
+
     //const pullsFromDB = await getPullsFromDB(labName, teamSlug);
-    
-     await getPulls(labName, teamSlug);
-    
+
+    // await getPulls(labName, teamSlug);
+    console.log(data);
     /*    const filteredPullsByTeamMembers = pullsList[`pulls-${labName}`].filter(
       (el) => members[`members${team}`]?.includes(el.user)
     );
