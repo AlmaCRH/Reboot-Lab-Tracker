@@ -17,7 +17,7 @@ const addLabToTeam = async (body) => {
     const response = await api.post("teams/labs", body);
     return response;
   } catch (error) {
-    console.error(error);
+    console.error(error.code);
   }
 };
 
@@ -29,9 +29,9 @@ const getUsersWithTeamsAndPullsByLab = async (teamName, labName) => {
         labName: labName,
       },
     });
-    return data === "" ? null : data;
+    return data === undefined ? null : data;
   } catch (error) {
-    console.error(error);
+    console.error(error.code);
   }
 };
 

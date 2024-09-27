@@ -68,19 +68,12 @@ const getUsersPulls = async (team, labName) => {
   const teamSlug = team.toLowerCase().replace(/\s+/g, "-");
   try {
     const pullsList = await getUsersWithTeamsAndPullsByLab(teamSlug, labName);
-
     if (pullsList) {
-      console.log("Pulls found");
       return pullsList;
     } else {
-      console.log("not found");
-      const members = await getTeamMembers(teamSlug);
-      const pulls = await getPulls(labName, teamSlug);
-
-      const filteredPullsByTeamMembers = pulls.filter((el) =>
-        members?.includes(el.githubUser)
-      );
-      return filteredPullsByTeamMembers;
+      await getTeamMembers(teamSlug);
+      await getPulls(labName, teamSlug);
+      return await getUsersPulls(team, labName);
     }
   } catch (error) {
     console.error(error);
