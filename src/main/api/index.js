@@ -83,7 +83,7 @@ const writeIntersection = async (auth, frontData) => {
       block
     );
 
-    const pulls = await getUsersPulls("Bootcamp eCommerce 01", lab);
+    const pulls = await getUsersPulls(teamName, lab);
     const { index, pullDate } = await getRowIndex(
       pulls,
       rows,
@@ -91,45 +91,91 @@ const writeIntersection = async (auth, frontData) => {
       endRow
     );
     const columnsIndex = await getColumnIndex(columns, lab);
+
+    const cellsValues = await getCellValues(
+      index,
+      columnsIndex,
+      bootcampID,
+      sheets
+    );
     const data = [];
-    console.log(pullDate);
-    index.map((index) => {
-      data.push({
-        range: `Lab Tracker!${columnsIndex}${index}`,
-        values: [[`Delivered at ${pullDate}`]],
-      });
+    const sortedIndex = index.sort((a, b) => a - b);
+
+    sortedIndex.map((index, indexRadio) => {
+      if (cellsValues[0].values) {
+        if (cellsValues[0].values.flat()[indexRadio] === "Not Delivered") {
+          data.push({
+            range: `Lab Tracker!${columnsIndex}${index}`,
+            values: [
+              [
+                pullDate[index] === "Not Delivered"
+                  ? `Not Delivered`
+                  : `Delivered at ${formatPullDate(pullDate[index])}`,
+              ],
+            ],
+          });
+        } else {
+          data.push({
+            range: `Lab Tracker!${columnsIndex}${index}`,
+            values: [[cellsValues[0].values.flat()[indexRadio]]],
+          });
+        }
+      } else {
+        data.push({
+          range: `Lab Tracker!${columnsIndex}${index}`,
+          values: [
+            [
+              pullDate[index] === "Not Delivered"
+                ? `Not Delivered`
+                : `Delivered at ${formatPullDate(pullDate[index])}`,
+            ],
+          ],
+        });
+      }
     });
 
     const body = {
       data: data,
       valueInputOption: "USER_ENTERED",
     };
-
     return sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: bootcampID,
       resource: body,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
+const getCellValues = async (indexRow, columnIndex, bootcampID, sheets) => {
+  const cellRanges = [];
 
+  indexRow.map((index) => {
+    cellRanges.push(index);
+  });
+  cellRanges.sort((a, b) => a - b);
+  cellRanges.splice(1, cellRanges.length - 2);
+
+  const cellsValues = await sheets.spreadsheets.values.batchGet({
+    spreadsheetId: bootcampID,
+    ranges: `Lab Tracker!${columnIndex}${cellRanges[0]}:${columnIndex}${cellRanges[1]}`,
+  });
+  return cellsValues.data.valueRanges;
+};
 const formatPullDate = (date) => {
-  const dateStr = date;
-  const dateObj = new Date(dateStr);
-
-  const formattedDate = dateObj
-    .toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
-    .replace(",", "");
-
-  return formattedDate;
+  if (date !== "Not Delivered") {
+    const dateObj = new Date(Date.parse(date));
+    const formattedDate = dateObj
+      .toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", "");
+    return formattedDate;
+  }
 };
 
 const getRowIndex = async (pulls, rows, startRow, endRow) => {
@@ -140,12 +186,13 @@ const getRowIndex = async (pulls, rows, startRow, endRow) => {
 
     const adjustedStart = startRow - offset;
     const adjustedEnd = endRow - offset;
-
     for (const pull of pulls.users) {
       for (let i = adjustedStart; i < adjustedEnd; i++) {
         if (rows[i] && rows[i].includes(pull.username)) {
           pullDate[i + offset + 4] =
-            pull.pullRequests[0]?.createdAt === undefined;
+            pull?.pullRequests[0]?.createdAt === undefined
+              ? "Not Delivered"
+              : pull?.pullRequests[0]?.createdAt;
           index.push(i + offset + 4);
         }
       }
@@ -153,7 +200,7 @@ const getRowIndex = async (pulls, rows, startRow, endRow) => {
 
     return { index: index, pullDate: pullDate };
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 

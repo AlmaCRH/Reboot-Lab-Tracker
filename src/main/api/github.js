@@ -35,7 +35,7 @@ const getPulls = async (labName, teamName) => {
         "X-GitHub-Api-Version": "2022-11-28",
       },
       sort: "created",
-      state: "open",
+      state: "all",
       direction: "desc",
       per_page: 50,
     });
@@ -57,7 +57,6 @@ const getPulls = async (labName, teamName) => {
     await addLabToTeam({ teamName, labName });
 
     await createPullsWithUsersAndLab({ pullsData: pulls, lab: labName });
-
     return pulls;
   } catch (error) {
     console.error(error);
@@ -65,16 +64,12 @@ const getPulls = async (labName, teamName) => {
 };
 
 const getUsersPulls = async (team, labName) => {
-  const teamSlug = team.toLowerCase().replace(/\s+/g, "-");
+  const teamSlug = team.trim().toLowerCase().replace(/\s+/g, "-").slice(0, -1);
   try {
+    await getPulls(labName, teamSlug);
+    await getTeamMembers(teamSlug);
     const pullsList = await getUsersWithTeamsAndPullsByLab(teamSlug, labName);
-    if (pullsList) {
-      return pullsList;
-    } else {
-      await getTeamMembers(teamSlug);
-      await getPulls(labName, teamSlug);
-      return await getUsersPulls(team, labName);
-    }
+    return pullsList;
   } catch (error) {
     console.error(error);
   }
