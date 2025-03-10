@@ -1,11 +1,10 @@
-Lab Automation & Tracking System
+# Lab Automation & Tracking System
 
 This project automates the process of tracking and managing labs. It has three primary branches:
-	1.	Terminal Interface: A command-line tool that helps track the labs and students’ submissions.
-	2.	Automated Server: A backend server that handles data processing and automation, including interaction with APIs and databases.
-	3.	Electron Application: A desktop application built with Electron to provide a GUI for interacting with the system.
+	1.	Automated Server: A backend server that handles data processing and automation, including interaction with APIs and databases.
+	2.	Electron Application: A desktop application built with Electron to provide a GUI for interacting with the system.
 
-Overview
+## Overview
 
 This system is designed to streamline lab tracking for students and instructors by automatically capturing submission details, managing students’ progress, and providing an easy-to-use interface for administrators.
 
