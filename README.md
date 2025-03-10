@@ -13,11 +13,8 @@ This system is designed to streamline lab tracking for students and instructors 
 Ensure the following dependencies are installed:
 	•	Node.js (v14 or higher)
 	•	NPM (for package management)
-	•	MySQL (for the database)
 	•	Electron (for the desktop application)
 	•	Google Sheets API (if using for lab tracking)
-	•	Setup the .env variables, you have an .env.example.
-
 
  ## Installation
 
