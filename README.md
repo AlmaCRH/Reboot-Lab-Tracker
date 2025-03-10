@@ -8,9 +8,7 @@ This project automates the process of tracking and managing labs. It has two pri
 
 This system is designed to streamline lab tracking for students and instructors by automatically capturing submission details, managing students’ progress, and providing an easy-to-use interface for administrators.
 
-⸻
-
-Prerequisites
+## Prerequisites
 
 Ensure the following dependencies are installed:
 	•	Node.js (v14 or higher)
@@ -20,7 +18,6 @@ Ensure the following dependencies are installed:
 	•	Google Sheets API (if using for lab tracking)
 	•	Setup the .env variables, you have an .env.example.
 
-⸻
 
  ## Installation
 
